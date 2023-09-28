@@ -14,15 +14,68 @@ import java.util.List;
 @ApplicationScoped
 public class AccountService {
 
-    public List<UserEntity> Users;
+    public List<UserEntity> users;
     public AccountService(){
-        Users = new ArrayList<>();
+        users = new ArrayList<>();
+        // Add default user
+        users.add(new UserEntity("Louis"));
+        users.add(new UserEntity("Clerk"));
+        users.add(new UserEntity("Mario"));
     }
+    public void addUser(UserDto newUser){
+        var user = new UserEntity(newUser.getUserName());
+        user.setAge(user.getAge());
+        users.add(user);
+    }
+    public UserDto getUser(String name){
 
-    public List<UserEntity> GetAllUsers(){
-        return Users;
+        UserEntity foundUser = users.stream()
+                .filter(user -> user.getUserName().equals(name))
+                .findFirst()
+                .orElse(null);
+
+        if (foundUser == null) {
+            return null;
+        }
+
+        UserDto existUser = new UserDto();
+        existUser.setUserName(foundUser.getUserName());
+        existUser.setAge(foundUser.getAge());
+
+        return existUser;
     }
-    public String GetAccountName(){
-        return  "Mario";
+    public List<UserDto> getAllUsers(){
+        List<UserDto> existUsers = new ArrayList<>();
+        for(var user : users ){
+            var existUser = new UserDto();
+            existUser.setUserName(user.getUserName());
+            existUser.setAge(user.getAge());
+            existUsers.add(existUser);
+        }
+        return existUsers;
+    }
+    public boolean updateUserAge(String name, int newAge){
+        UserEntity foundUser = users.stream()
+                .filter(user -> user.getUserName().equals(name))
+                .findFirst()
+                .orElse(null);
+        if (foundUser == null) {
+            return false;
+        }
+        foundUser.setAge(newAge);
+        return true;
+    }
+    public boolean deleteUser(String username) {
+        UserEntity userToRemove = users.stream()
+                .filter(user -> user.getUserName().equals(username))
+                .findFirst()
+                .orElse(null);
+
+        if (userToRemove == null) {
+            return false;
+        }
+
+        users.remove(userToRemove);
+        return true;
     }
 }

@@ -18,4 +18,11 @@ public class UserEntity {
 
     private String userName;
 
+    private int age;
+
+    public UserEntity(String userName){
+        this.userName = userName;
+        this.age = 18;
+    }
+
 }

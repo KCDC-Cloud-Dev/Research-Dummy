@@ -15,4 +15,6 @@ import lombok.Setter;
 public class UserDto {
 
     private String userName;
+
+    private int age;
 }
