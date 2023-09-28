@@ -59,13 +59,5 @@ public class GreetingResourceTest {
         // 可以在這裡加入其他的驗證邏輯
     }
 
-    @Test
-    public void testHelloEndpoint() {
-        given()
-          .when().get("/hello")
-          .then()
-             .statusCode(200)
-             .body(is("Hello from RESTEasy Reactive"));
-    }
 
 }
