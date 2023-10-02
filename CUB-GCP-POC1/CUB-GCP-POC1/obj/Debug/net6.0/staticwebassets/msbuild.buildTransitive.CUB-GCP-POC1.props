@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/CUB-GCP-POC1.props" />
+</Project>
