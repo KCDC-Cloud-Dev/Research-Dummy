@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/CUB-GCP-POC1.props" />
-</Project>
