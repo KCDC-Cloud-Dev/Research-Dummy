@@ -41,6 +41,15 @@ namespace CUB_GCP_POC1.Controllers
         {
             var users = await _fileStoreService.ReadData(collectionName: "User", documentId: name);
 
+            if (users == null || users.Count == 0)
+            {
+                return NotFound(new ApiResponse<Dictionary<string, object>>
+                {
+                    Data = null,
+                    Message = "User not found",
+                });
+            }
+
             return Ok(new ApiResponse<Dictionary<string, object>>
             {
                 Data = users,
@@ -63,7 +72,7 @@ namespace CUB_GCP_POC1.Controllers
 
             return Ok(new ApiResponse<object>
             {
-                Message = "Create user sucessful",
+                Message = "Modify user sucessful",
             });
         }
 
