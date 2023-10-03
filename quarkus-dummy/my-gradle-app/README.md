@@ -1,4 +1,4 @@
-# my-gradle-app
+# Quarkus Simple RESTful API Sample
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
