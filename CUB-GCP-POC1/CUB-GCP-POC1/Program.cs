@@ -1,10 +1,16 @@
-﻿using Google.Cloud.Firestore;
+﻿using CUB_GCP_POC1.Service;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped(option => { 
+
+    var projectID = builder.Configuration["ProjectID"];
+    var serviceAccountAuth = builder.Configuration["ServiceAccountAuth"];
+    return new FileStoreService(projectID, serviceAccountAuth);
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
