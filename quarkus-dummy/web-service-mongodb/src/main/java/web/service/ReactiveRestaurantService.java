@@ -1,8 +1,13 @@
 package web.service;
 
 import io.quarkus.mongodb.reactive.ReactiveMongoClient;
+import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.bson.Document;
+
+import java.util.List;
 
 /**
  * @author : Mario.Yu
@@ -15,6 +20,9 @@ public class ReactiveRestaurantService {
     @Inject
     ReactiveMongoClient mongoClient;
 
-    
 
+    private ReactiveMongoCollection<Document> getCollection() {
+        return mongoClient.getDatabase("sample_restaurants")
+                          .getCollection("restaurants");
+    }
 }
