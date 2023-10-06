@@ -1,4 +1,4 @@
-package web.service;
+package web;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;

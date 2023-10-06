@@ -22,6 +22,8 @@ dependencies {
     implementation 'io.quarkus:quarkus-smallrye-openapi:3.4.1'
     // MongoDB
     implementation("io.quarkus:quarkus-mongodb-client")
+    // MongoDB BSON Tool
+    implementation 'org.mongodb:bson:3.8.1'
 }
 
 group 'web-service'

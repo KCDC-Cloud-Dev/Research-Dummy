@@ -1,4 +1,4 @@
-package web.service.infrastructure.repository;
+package web.infrastructure.repository;
 
 /**
  * @author : Mario.Yu
