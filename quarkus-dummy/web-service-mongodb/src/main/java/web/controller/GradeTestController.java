@@ -31,10 +31,20 @@ public class GradeTestController {
     }
 
     @POST
-    @Path("CreateGrade")
-    public Uni<List<Grade>> addGrade(Grade grade){
+    @Path("AddTenItemGrade")
+    public Uni<List<Grade>> addTenItemGrade(Grade grade){
 
         return reactiveGradeTestService.add(grade)
+                .onItem()
+                .ignore()
+                .andSwitchTo(this::list);
+    }
+
+    @POST
+    @Path("BachTenThousandAddGrade")
+    public Uni<List<Grade>> bachTenThousandAddGrade(Grade grade){
+
+        return reactiveGradeTestService.bachAdd(grade)
                 .onItem()
                 .ignore()
                 .andSwitchTo(this::list);
