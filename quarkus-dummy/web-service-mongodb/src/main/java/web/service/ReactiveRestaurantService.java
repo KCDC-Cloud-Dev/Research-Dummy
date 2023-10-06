@@ -1,6 +1,5 @@
 package web.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.mongodb.reactive.ReactiveMongoClient;
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
 import io.smallrye.mutiny.Uni;
@@ -12,8 +11,6 @@ import web.infrastructure.entity.Coord;
 import web.infrastructure.entity.Grade;
 import web.infrastructure.entity.Restaurant;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,16 +27,16 @@ public class ReactiveRestaurantService {
     ReactiveMongoClient mongoClient;
 
     public Uni<List<Restaurant>> list(){
-        var objectMapper = new ObjectMapper();
+
         return getCollection().find()
-                .map(doc -> {
+                .map(document -> {
                     // 幫我補上map..用doc.getString...getInterage寫法
                     Restaurant restaurant = new Restaurant();
-                    restaurant.setBorough(doc.getString("borough"));
-                    restaurant.setCuisine(doc.getString("cuisine"));
-                    restaurant.setName(doc.getString("name"));
+                    restaurant.setBorough(document.getString("borough"));
+                    restaurant.setCuisine(document.getString("cuisine"));
+                    restaurant.setName(document.getString("name"));
 
-                    Document addressDoc = doc.get("address", Document.class);
+                    Document addressDoc = document.get("address", Document.class);
                     if (addressDoc != null) {
                         Address address = new Address();
                         address.setBuilding(addressDoc.getString("building"));
@@ -57,7 +54,7 @@ public class ReactiveRestaurantService {
                     }
 
                     // 下面是處理 grades 的代碼。因為它是一個複雜的字段，所以我特別為它寫了一段處理邏輯。
-                    List<Document> gradesList = doc.get("grades", List.class);
+                    List<Document> gradesList = document.get("grades", List.class);
                     if (gradesList != null) {
                         List<Grade> grades = gradesList.stream()
                                 .map(gradeDoc -> {
@@ -75,8 +72,8 @@ public class ReactiveRestaurantService {
                     }
 
                     return restaurant;
-                }).collect().asList();
-                //.map(fullList -> fullList.stream().limit(5).collect(Collectors.toList()));
+                }).collect().asList()
+                .map(fullList -> fullList.stream().limit(20).collect(Collectors.toList()));
     }
 
 
