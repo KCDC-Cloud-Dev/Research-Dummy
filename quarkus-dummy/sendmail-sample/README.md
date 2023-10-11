@@ -45,7 +45,7 @@ public void sendEmail(@QueryParam("addr：ess") String address) {
 
 測試時要加入 API_KEY 有兩個使用方法：
 
-1. 直接寫在 `application.properties` 中（不建議）
+1. 直接寫在 `application.properties` 中
     `
     quarkus.mailer.password=<API_KEY>
     `
@@ -59,8 +59,11 @@ public void sendEmail(@QueryParam("addr：ess") String address) {
 2. 執行服務時以參數帶入
     `/gradlew --console=plain quarkusDev -Dquarkus.mailer.password=<API_KEY>`
 
-目前還在測試包成 Docker Image 後直接取用環境變數是否可行
 
 然後使用這個指令，就可以發送信件：
 
 `curl http://localhost:8080/mail?address=XXX@gmail.com`
+
+### 使用 k6 工具
+
+先在環境中安裝 k6 就可以執行 `src/test/k6-script` 中的同步 /非同步測試
