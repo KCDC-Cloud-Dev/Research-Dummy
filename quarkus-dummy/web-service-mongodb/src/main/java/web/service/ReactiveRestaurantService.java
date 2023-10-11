@@ -2,10 +2,14 @@ package web.service;
 
 import io.quarkus.mongodb.reactive.ReactiveMongoClient;
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import mutiny.zero.flow.adapters.AdaptersToFlow;
 import org.bson.Document;
+import org.jboss.logging.Logger;
 import web.infrastructure.entity.Address;
 import web.infrastructure.entity.Coord;
 import web.infrastructure.entity.Grade;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class ReactiveRestaurantService {
 
+    private final static Logger logger = Logger.getLogger(ReactiveRestaurantService.class);
     @Inject
     ReactiveMongoClient mongoClient;
 
@@ -72,8 +77,11 @@ public class ReactiveRestaurantService {
                     }
 
                     return restaurant;
-                }).collect().asList()
-                .map(fullList -> fullList.stream().limit(20).collect(Collectors.toList()));
+                })
+                .collect().asList()
+                .map(fullList -> fullList.stream()
+                .limit(20)
+                .collect(Collectors.toList()));
     }
 
 
@@ -82,5 +90,21 @@ public class ReactiveRestaurantService {
                 .getCollection("restaurants");
     }
 
-
+    // 自行包裝寫法
+    public Uni<List<Restaurant>> list2() {
+        var ctx = Vertx.currentContext();
+        var start = System.currentTimeMillis();
+        return Multi.createBy().replaying()
+                .ofMulti(Multi.createFrom()
+                        .publisher(
+                                AdaptersToFlow.publisher(
+                                        mongoClient.getDatabase("sample_restaurants").unwrap()
+                                                .getCollection("restaurants",Restaurant.class)
+                                                .find())))
+                .emitOn(cmd -> ctx.runOnContext(x -> cmd.run()))
+                .collect()
+                .asList()
+                .onItem().invoke(res -> logger.info("Reactive took " + (System.currentTimeMillis() - start) + " ms"))
+                .onFailure().invoke(err -> logger.error("An error occurred", err));
+    }
 }

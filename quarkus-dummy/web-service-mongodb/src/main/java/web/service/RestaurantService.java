@@ -30,8 +30,8 @@ public class RestaurantService {
 
     public List<Restaurant> list() {
         List<Restaurant> list = new ArrayList<>();
-        MongoCursor<Document> cursor = getCollection().find().limit(20).iterator();
-
+//        MongoCursor<Document> cursor = getCollection().find().limit(20).iterator();
+        MongoCursor<Document> cursor = getCollection().find().iterator();
         try {
             while (cursor.hasNext()) {
                 Document document = cursor.next();

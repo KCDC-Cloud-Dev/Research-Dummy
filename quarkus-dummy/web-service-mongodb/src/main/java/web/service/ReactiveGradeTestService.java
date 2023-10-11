@@ -3,10 +3,14 @@ package web.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.mongodb.reactive.ReactiveMongoClient;
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import mutiny.zero.flow.adapters.AdaptersToFlow;
 import org.bson.Document;
+import org.jboss.logging.Logger;
 import web.infrastructure.entity.Grade;
 
 import java.io.IOException;
@@ -21,6 +25,8 @@ import java.util.stream.IntStream;
  */
 @ApplicationScoped
 public class ReactiveGradeTestService {
+
+    private final static Logger logger = Logger.getLogger(ReactiveRestaurantService.class);
 
     @Inject
     ReactiveMongoClient mongoClient;
@@ -55,11 +61,6 @@ public class ReactiveGradeTestService {
                         .append("score", grade.getScore())
                         .append("date", grade.getDate()))
                 .collect(Collectors.toList());  // 轉換生成的流為List
-//        var document = new Document()
-//                .append("grade", grade.getGrade())
-//                .append("score", grade.getScore())
-//                .append("date", grade.getDate());
-
 
         return getCollection().insertMany(documents)
                 // 當你從資料庫的插入操作收到一個項目（也就是操作成功或失敗的訊息）時，進行下一步
@@ -83,18 +84,32 @@ public class ReactiveGradeTestService {
                         e.printStackTrace();
                         return null;
                     }
-                }).collect().asList()
-                .map(fullList -> fullList.stream().limit(10).collect(Collectors.toList()));
-
-//        return getCollection().find()
-//                .map(doc -> {
-//                    var grade = new Grade();
-//                    grade.setGrade(doc.getString("grade"));
-//                    grade.setScore(doc.getInteger("score"));
-//                    grade.setDate(doc.getDate("date"));
-//                    return grade;
-//                }).collect().asList();
+                }).collect().asList();
+//                .map(fullList -> fullList.stream().limit(10).collect(Collectors.toList()));
     }
+
+    /**
+     * 自行包裝非同步寫法
+     * @return List<Grade>
+     */
+    public Uni<List<Grade>> selfReactiveList() {
+        var ctx = Vertx.currentContext();
+        var start = System.currentTimeMillis();
+        return Multi.createBy().replaying()
+                .ofMulti(Multi.createFrom()
+                        .publisher(
+                                AdaptersToFlow.publisher(
+                                        mongoClient.getDatabase("sample").unwrap()
+                                                .getCollection("simple",Grade.class)
+                                                .find())))
+                .emitOn(cmd -> ctx.runOnContext(x -> cmd.run()))
+                .collect()
+                .asList()
+                .onItem().invoke(res -> logger.info("Reactive took " + (System.currentTimeMillis() - start) + " ms"))
+
+                .onFailure().invoke(err -> logger.error("An error occurred", err));
+    }
+
     private ReactiveMongoCollection<Document> getCollection() {
         return mongoClient.getDatabase("sample")
                 .getCollection("simple");
