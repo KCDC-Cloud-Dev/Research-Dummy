@@ -28,5 +28,9 @@ public class ReactiveRestaurantController {
         return reactiveRestaurantService.list();
     }
 
-
+    @GET
+    @Path("SelfReactiveList")
+    public Uni<List<Restaurant>> selfReactiveList() {
+        return reactiveRestaurantService.selfReactiveList();
+    }
 }

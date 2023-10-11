@@ -91,7 +91,7 @@ public class ReactiveRestaurantService {
     }
 
     // 自行包裝寫法
-    public Uni<List<Restaurant>> list2() {
+    public Uni<List<Restaurant>> selfReactiveList() {
         var ctx = Vertx.currentContext();
         var start = System.currentTimeMillis();
         return Multi.createBy().replaying()
@@ -99,9 +99,53 @@ public class ReactiveRestaurantService {
                         .publisher(
                                 AdaptersToFlow.publisher(
                                         mongoClient.getDatabase("sample_restaurants").unwrap()
-                                                .getCollection("restaurants",Restaurant.class)
+                                                .getCollection("restaurants")
                                                 .find())))
                 .emitOn(cmd -> ctx.runOnContext(x -> cmd.run()))
+                .map(document -> {
+                    // 幫我補上map..用doc.getString...getInterage寫法
+                    Restaurant restaurant = new Restaurant();
+                    restaurant.setBorough(document.getString("borough"));
+                    restaurant.setCuisine(document.getString("cuisine"));
+                    restaurant.setName(document.getString("name"));
+
+                    Document addressDoc = document.get("address", Document.class);
+                    if (addressDoc != null) {
+                        Address address = new Address();
+                        address.setBuilding(addressDoc.getString("building"));
+                        address.setStreet(addressDoc.getString("street"));
+                        address.setZipcode(addressDoc.getString("zipcode"));
+
+                        List<Double> coordList = addressDoc.get("coord", List.class);
+                        if (coordList != null) {
+                            Coord coord = new Coord();
+                            coord.setCoordinates(coordList);
+                            address.setCoord(coord);
+                        }
+
+                        restaurant.setAddress(address);
+                    }
+
+                    // 下面是處理 grades 的代碼。因為它是一個複雜的字段，所以我特別為它寫了一段處理邏輯。
+                    List<Document> gradesList = document.get("grades", List.class);
+                    if (gradesList != null) {
+                        List<Grade> grades = gradesList.stream()
+                                .map(gradeDoc -> {
+                                    Grade grade = new Grade();
+                                    grade.setGrade(gradeDoc.getString("grade"));
+
+                                    grade.setScore(Objects.requireNonNullElse(gradeDoc.getInteger("score"), 0));
+
+                                    // 處理 date 字段，如果你有特殊的日期解析需求，這裡可能需要調整
+                                    grade.setDate(gradeDoc.getDate("date"));
+                                    return grade;
+                                })
+                                .collect(Collectors.toList());
+                        restaurant.setGrades(grades);
+                    }
+
+                    return restaurant;
+                })
                 .collect()
                 .asList()
                 .onItem().invoke(res -> logger.info("Reactive took " + (System.currentTimeMillis() - start) + " ms"))
