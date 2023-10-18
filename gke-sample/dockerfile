@@ -1,0 +1,4 @@
+FROM unitfinance/jdk17-sbt-scala:latest
+RUN mkdir /opt/app
+COPY ./target/*.jar /opt/app/gkeSample.jar
+ENTRYPOINT ["java","-jar","/opt/app/gkeSample.jar"]
