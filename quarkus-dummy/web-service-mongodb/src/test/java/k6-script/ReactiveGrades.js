@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export let options = {
-  vus: 1, // 设置虚拟用户数为1
+  vus: 100, // 设置虚拟用户数为1
   duration: '1s', // 设置测试持续时间为1秒
 };
 

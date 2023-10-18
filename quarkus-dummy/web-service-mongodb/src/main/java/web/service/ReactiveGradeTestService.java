@@ -1,6 +1,8 @@
 package web.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoCollection;
 import io.quarkus.mongodb.reactive.ReactiveMongoClient;
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
 import io.smallrye.mutiny.Multi;
@@ -29,7 +31,9 @@ public class ReactiveGradeTestService {
     private final static Logger logger = Logger.getLogger(ReactiveRestaurantService.class);
 
     @Inject
-    ReactiveMongoClient mongoClient;
+    MongoClient mongoClient;
+    @Inject
+    ReactiveMongoClient reactiveMongoClient;
 
     public Uni<Void> add(Grade grade){
 
@@ -40,7 +44,7 @@ public class ReactiveGradeTestService {
                         .append("date", grade.getDate()))
                 .collect(Collectors.toList());  // 轉換生成的流為List
 
-        return getCollection().insertMany(documents)
+        return getReactiveCollection().insertMany(documents)
                 // 當你從資料庫的插入操作收到一個項目（也就是操作成功或失敗的訊息）時，進行下一步
                 .onItem()
                 // 不在乎這個操作返回什麼，只在乎它完成了
@@ -62,7 +66,7 @@ public class ReactiveGradeTestService {
                         .append("date", grade.getDate()))
                 .collect(Collectors.toList());  // 轉換生成的流為List
 
-        return getCollection().insertMany(documents)
+        return getReactiveCollection().insertMany(documents)
                 // 當你從資料庫的插入操作收到一個項目（也就是操作成功或失敗的訊息）時，進行下一步
                 .onItem()
                 // 不在乎這個操作返回什麼，只在乎它完成了
@@ -76,7 +80,7 @@ public class ReactiveGradeTestService {
     }
     public Uni<List<Grade>> list(){
         var objectMapper = new ObjectMapper();
-        return getCollection().find()
+        return getReactiveCollection().find()
                 .map(doc -> {
                     try {
                         return objectMapper.readValue(doc.toJson(), Grade.class);
@@ -99,7 +103,7 @@ public class ReactiveGradeTestService {
                 .ofMulti(Multi.createFrom()
                         .publisher(
                                 AdaptersToFlow.publisher(
-                                        mongoClient.getDatabase("sample").unwrap()
+                                        reactiveMongoClient.getDatabase("sample").unwrap()
                                                 .getCollection("simple",Grade.class)
                                                 .find())))
                 .emitOn(cmd -> ctx.runOnContext(x -> cmd.run()))
@@ -110,8 +114,34 @@ public class ReactiveGradeTestService {
                 .onFailure().invoke(err -> logger.error("An error occurred", err));
     }
 
-    private ReactiveMongoCollection<Document> getCollection() {
-        return mongoClient.getDatabase("sample")
+    private ReactiveMongoCollection<Document> getReactiveCollection() {
+        return reactiveMongoClient.getDatabase("sample")
                 .getCollection("simple");
+    }
+
+
+    public Multi<Grade> listWithMutiny() {
+        MongoCollection<Document> collection = getCollection();
+        var objectMapper = new ObjectMapper();
+        var ddd = collection.find();
+
+
+        return Multi.createFrom()
+                .publisher(() -> collection.find())
+                .onItem().transform(doc -> {
+                    try {
+                        return objectMapper.readValue(doc.toJson(), Grade.class);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                });
+    }
+
+
+
+    private MongoCollection<Document> getCollection(){
+        return mongoClient.getDatabase("sample_restaurants")
+                .getCollection("restaurants");
     }
 }

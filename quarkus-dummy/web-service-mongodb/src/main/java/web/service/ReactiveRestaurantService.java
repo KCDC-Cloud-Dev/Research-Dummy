@@ -14,6 +14,8 @@ import web.infrastructure.entity.Address;
 import web.infrastructure.entity.Coord;
 import web.infrastructure.entity.Grade;
 import web.infrastructure.entity.Restaurant;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoCollection;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,12 +30,16 @@ import java.util.stream.Collectors;
 public class ReactiveRestaurantService {
 
     private final static Logger logger = Logger.getLogger(ReactiveRestaurantService.class);
+
     @Inject
-    ReactiveMongoClient mongoClient;
+    MongoClient mongoClient;
+
+    @Inject
+    ReactiveMongoClient reactiveMongoClient;
 
     public Uni<List<Restaurant>> list(){
 
-        return getCollection().find()
+        return getReactiveCollection().find()
                 .map(document -> {
                     // 幫我補上map..用doc.getString...getInterage寫法
                     Restaurant restaurant = new Restaurant();
@@ -84,9 +90,8 @@ public class ReactiveRestaurantService {
                 .collect(Collectors.toList()));
     }
 
-
-    private ReactiveMongoCollection<Document> getCollection() {
-        return mongoClient.getDatabase("sample_restaurants")
+    private ReactiveMongoCollection<Document> getReactiveCollection() {
+        return reactiveMongoClient.getDatabase("sample_restaurants")
                 .getCollection("restaurants");
     }
 
@@ -98,7 +103,7 @@ public class ReactiveRestaurantService {
                 .ofMulti(Multi.createFrom()
                         .publisher(
                                 AdaptersToFlow.publisher(
-                                        mongoClient.getDatabase("sample_restaurants").unwrap()
+                                        reactiveMongoClient.getDatabase("sample_restaurants").unwrap()
                                                 .getCollection("restaurants")
                                                 .find())))
                 .emitOn(cmd -> ctx.runOnContext(x -> cmd.run()))
@@ -150,5 +155,11 @@ public class ReactiveRestaurantService {
                 .asList()
                 .onItem().invoke(res -> logger.info("Reactive took " + (System.currentTimeMillis() - start) + " ms"))
                 .onFailure().invoke(err -> logger.error("An error occurred", err));
+    }
+
+
+    private MongoCollection<Document> getCollection(){
+        return mongoClient.getDatabase("sample_restaurants")
+                .getCollection("restaurants");
     }
 }
