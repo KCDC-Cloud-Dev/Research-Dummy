@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace keycloak_sso_net6.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/api/weatherforecast")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]

@@ -13,12 +13,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("/hello")
+@RequestMapping("/user")
 public class UserVerifyController {
 
-    @GetMapping("/demo")
+    @GetMapping("/login")
     public String login() {
         return "auth check ok";
+    }
+
+    @GetMapping("/getAccount")
+    public String getAccount() {
+        return "Mario";
     }
 
 }
