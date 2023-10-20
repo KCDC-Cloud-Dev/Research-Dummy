@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace keycloak_sso_net6.Controllers
 {
@@ -15,14 +16,16 @@ namespace keycloak_sso_net6.Controllers
             _logger = logger;
         }
 
-
-        [HttpGet(Name = nameof(Login))]
+        [Authorize]
+        [HttpGet(nameof(Login))]
         public string Login()
         {
             return "auth check ok";
+        
         }
 
-        [HttpGet(Name = nameof(GetAccount))]
+        [Authorize]
+        [HttpGet(nameof(GetAccount))]
         public string GetAccount()
         {
             return "Mario";
