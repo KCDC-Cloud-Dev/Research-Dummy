@@ -16,10 +16,13 @@ namespace keycloak_sso_net6.Controllers
             _logger = logger;
         }
 
+        //[Authorize(Roles = "api-getaccount")]
         [Authorize]
         [HttpGet(nameof(Login))]
         public string Login()
         {
+
+            var user = GetUserName();
             return "auth check ok";
         
         }
@@ -29,6 +32,17 @@ namespace keycloak_sso_net6.Controllers
         public string GetAccount()
         {
             return "Mario";
+        }
+
+        private string GetUserName()
+        {
+            //return "Mario";
+            var userNameClaim = User.Claims.FirstOrDefault(c => c.Type == "nameid");
+            if (userNameClaim == null)
+            {
+                throw new Exception("User claim not found.");
+            }
+            return userNameClaim.Value;
         }
     }
 }
