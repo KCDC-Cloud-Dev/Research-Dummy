@@ -24,7 +24,7 @@ builder.Services.AddAuthentication(options =>
 .AddOpenIdConnect(options =>
 {
     options.RequireHttpsMetadata = false; 
-    options.Authority = "http://localhost:8081/realms/google-auth";
+    options.Authority = "http://localhost:8082/realms/google-auth";
     options.ClientId = "spring";
     options.ResponseType = "code";
     options.Scope.Add("openid");
