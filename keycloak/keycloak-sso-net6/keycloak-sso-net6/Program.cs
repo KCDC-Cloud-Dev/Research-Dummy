@@ -1,11 +1,20 @@
+using keycloak_sso_net6.Middleware;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddSingleton<IAuthorizationHandler, MustHaveGetRoleHandler>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -18,59 +27,53 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
-})
-.AddJwtBearer("Bearer", options =>
-{
-    // 這部分是為了Access Token
-    options.Authority = "http://localhost:8081/auth/realms/api-role-lab";
-    
-    options.Audience = "admin-rest-client";
-    options.RequireHttpsMetadata = false;
-
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = "http://localhost:8081/auth/realms/api-role-lab"
-    };
+    options.LoginPath = "/api/user/Login";
+    options.Cookie.Name = "keycloak.cookie";
+    options.Cookie.MaxAge = TimeSpan.FromMinutes(60);
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.SlidingExpiration = true;
 }).AddOpenIdConnect(options =>
 {
-    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.RequireHttpsMetadata = false;
-    options.Authority = "http://localhost:8081/auth/realms/api-role-lab";
+    options.Authority = "http://localhost:8082/realms/api-role-lab";
+    options.RequireHttpsMetadata = false; // 只推薦在開發環境使用
     options.ClientId = "admin-rest-client";
-    options.ClientSecret = "6GXJRf9rcrg0ccgi4AAmPk42ORUYN9iS";
-    options.ResponseType = "code";
+    //options.ClientSecret = "6GXJRf9rcrg0ccgi4AAmPk42ORUYN9iS";
+    options.ClientSecret = "obxz7kEQ1IUMFMmJynouwwxcK6UgMsR0";
+    //options.ResponseType = "code";
+    options.ResponseType = OpenIdConnectResponseType.Code;
+    // 操操操操 就少這行!!!!!!!
     options.SaveTokens = true;
+    
     options.Scope.Add("openid");
     options.Scope.Add("profile");
+    options.Scope.Add("email");
     options.Scope.Add("roles");
-
     options.TokenValidationParameters = new TokenValidationParameters
     {
         NameClaimType = "preferred_username",
-        RoleClaimType = "roles",
-        ValidateIssuer = true,
-        ValidIssuer = "http://localhost:8081/auth/realms/api-role-lab"
+        RoleClaimType = ClaimTypes.Role,
+        ValidateIssuer = true
     };
-
-
-    options.Events = new OpenIdConnectEvents
-    {
-        OnTokenResponseReceived = context =>
-        {
-            // 檢查這裡是否有拿到 Access Token
-            var accessToken = context.TokenEndpointResponse.AccessToken;
-            Console.WriteLine($"*******************{accessToken}");
-            return Task.CompletedTask;
-        },
-    };
-
 });
 
+List<string> requiredRoles = new List<string> { "get" };
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("MustHaveGetRole", policy =>
+    {
+        policy.Requirements.Add(new MustHaveGetRoleRequirement(requiredRoles));
+    });
+});
+
+/*
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("MustHaveGetRole", policy =>
+    {
+        policy.Requirements.Add(new MustHaveGetRoleRequirement());
+    });
+});
+*/
 
 
 var app = builder.Build();
