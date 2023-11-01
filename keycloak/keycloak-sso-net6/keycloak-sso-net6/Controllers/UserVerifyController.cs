@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace keycloak_sso_net6.Controllers
 {
- 
+
     [ApiController]
     [Route("api/user")]
     public class UserVerifyController : ControllerBase
@@ -16,33 +20,28 @@ namespace keycloak_sso_net6.Controllers
             _logger = logger;
         }
 
-        //[Authorize(Roles = "api-getaccount")]
         [Authorize]
         [HttpGet(nameof(Login))]
-        public string Login()
+        public async Task<string> Login()
         {
-
-            var user = GetUserName();
             return "auth check ok";
-        
         }
 
-        [Authorize]
-        [HttpGet(nameof(GetAccount))]
-        public string GetAccount()
+        //[Authorize]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet(nameof(GetRoles))]
+        public IActionResult GetRoles()
         {
-            return "Mario";
+            // 尋找所有的 "role" claims
+            var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
+            return Ok(new { Roles = roles });
         }
 
-        private string GetUserName()
+        [HttpGet("trigger-auth")]
+        public IActionResult TriggerAuth()
         {
-            //return "Mario";
-            var userNameClaim = User.Claims.FirstOrDefault(c => c.Type == "nameid");
-            if (userNameClaim == null)
-            {
-                throw new Exception("User claim not found.");
-            }
-            return userNameClaim.Value;
+            return Challenge(new AuthenticationProperties { RedirectUri = "/" }, OpenIdConnectDefaults.AuthenticationScheme);
         }
+
     }
 }

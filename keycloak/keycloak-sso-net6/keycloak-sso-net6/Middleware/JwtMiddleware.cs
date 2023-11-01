@@ -13,11 +13,12 @@ namespace keycloak_sso_net6.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            /*
             foreach (var header in context.Request.Headers)
             {
                 Console.WriteLine($"{header.Key}: {header.Value}");
             }
-
+            */
 
             string authorizationHeader = context.Request.Headers["Authorization"];
 
