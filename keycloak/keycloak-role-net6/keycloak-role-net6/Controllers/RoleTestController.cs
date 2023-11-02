@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace keycloak_role_net6.Controllers
 {
@@ -15,6 +16,17 @@ namespace keycloak_role_net6.Controllers
         }
 
 
+        [HttpGet(nameof(GetRoles))]
+        public IActionResult GetRoles()
+        {
+
+            var roles = User.Claims
+                      .Where(c => c.Type == ClaimTypes.Role)
+                      .Select(c => c.Value)
+                      .ToList();
+            return Ok(roles);
+        }
+
         [Authorize(Roles = "admin,write")]
         [HttpGet(nameof(Create))]
         public IActionResult Create()
@@ -29,7 +41,7 @@ namespace keycloak_role_net6.Controllers
             return Ok("Read OK");
         }
 
-        [Authorize(Roles = "admin,write")]
+        [Authorize(Roles = "admin")]
         [HttpGet(nameof(Edit))]
         public IActionResult Edit()
         {

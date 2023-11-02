@@ -38,22 +38,27 @@ namespace keycloak_role_net6.Controllers
         [HttpGet(nameof(Logout))]
         public async Task<IActionResult> Logout()
         {
-            return new SignOutResult(
-            new[] {
+            // 登出後的重定向URL
+            var redirectUri = Url.Action(nameof(Login));
+
+            // 設置登出屬性並指定重定向URL
+            var properties = new AuthenticationProperties { RedirectUri = redirectUri };
+
+            return SignOut(properties,
                 OpenIdConnectDefaults.AuthenticationScheme,
-                CookieAuthenticationDefaults.AuthenticationScheme
-            });
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
         }
 
 
-        // Policy Test
-        [Authorize(Policy = "MustHaveGetRole")]
-        [HttpGet(nameof(GetAccountNameAsync))]
-        public async Task<string> GetAccountNameAsync()
+        
+        /* 測試使用
+        [HttpGet("trigger-auth")]
+        public IActionResult TriggerAuth()
         {
-            return "Account Name";
+            return Challenge(new AuthenticationProperties { RedirectUri = "/" }, OpenIdConnectDefaults.AuthenticationScheme);
         }
+        */
 
-      
     }
 }

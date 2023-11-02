@@ -110,7 +110,7 @@ builder.Services.AddAuthentication(options =>
 
 });
 
-List<string> requiredRoles = new List<string> { "get","write" };
+List<string> requiredRoles = new List<string> { "read","write" };
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("MustHaveGetRole", policy =>
@@ -118,7 +118,6 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new GetKeycloakRoleRequirement(requiredRoles));
     });
 });
-
 
 var app = builder.Build();
 
