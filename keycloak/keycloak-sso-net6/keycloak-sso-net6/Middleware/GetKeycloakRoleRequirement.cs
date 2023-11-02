@@ -4,18 +4,18 @@ using System.Linq;
 
 namespace keycloak_sso_net6.Middleware
 {
-    public class MustHaveGetRoleRequirement : IAuthorizationRequirement
+    public class GetKeycloakRoleRequirement : IAuthorizationRequirement
     {
         public List<string> RequiredRoles { get; }
 
-        public MustHaveGetRoleRequirement(List<string> requiredRoles = null)
+        public GetKeycloakRoleRequirement(List<string> requiredRoles = null)
         {
             RequiredRoles = requiredRoles ?? new List<string>();
         }
     }
-    public class MustHaveGetRoleHandler : AuthorizationHandler<MustHaveGetRoleRequirement>
+    public class KeycloakIDTokenGetRoleHandler : AuthorizationHandler<GetKeycloakRoleRequirement>
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, MustHaveGetRoleRequirement requirement)
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, GetKeycloakRoleRequirement requirement)
         {
             var resourceAccessClaim = context.User.Claims.FirstOrDefault(c => c.Type == "resource_access");
             if (resourceAccessClaim != null)
@@ -41,24 +41,7 @@ namespace keycloak_sso_net6.Middleware
                 {
                     context.Succeed(requirement);
                 }
-
-                /*
-                if (userRoles != null && userRoles.Intersect(requirement.RequiredRoles).Any())
-                {
-                    context.Succeed(requirement);
-                }
-                */
                 return Task.CompletedTask;
-
-                /*
-                if (userRoles != null)
-                {
-                    if (userRoles.Intersect(requirement.RequiredRoles).Any())
-                    {
-                        context.Succeed(requirement);
-                    }
-                }
-                */
             }
             return Task.CompletedTask;
         }

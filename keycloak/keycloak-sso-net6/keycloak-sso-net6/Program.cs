@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSingleton<IAuthorizationHandler, MustHaveGetRoleHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, KeycloakIDTokenGetRoleHandler>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -123,7 +123,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("MustHaveGetRole", policy =>
     {
-        policy.Requirements.Add(new MustHaveGetRoleRequirement(requiredRoles));
+        policy.Requirements.Add(new GetKeycloakRoleRequirement(requiredRoles));
     });
 });
 
