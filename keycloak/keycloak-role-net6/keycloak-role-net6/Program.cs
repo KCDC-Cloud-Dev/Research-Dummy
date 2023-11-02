@@ -2,6 +2,7 @@ using keycloak_role_net6.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -44,6 +45,20 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = bool.Parse(builder.Configuration.GetSection("Keycloak")["SaveTokens"]);
 
     // Access Token 解析手動放入Claims
+
+
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+    options.Scope.Add("roles");
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        NameClaimType = "preferred_username",
+        RoleClaimType = ClaimTypes.Role,
+        ValidateIssuer = true
+    };
+
+
     options.Events = new OpenIdConnectEvents
     {
         OnTokenValidated = context =>
@@ -109,10 +124,10 @@ builder.Services.AddAuthentication(options =>
 
 });
 
-List<string> requiredRoles = new List<string> { "get" };
+List<string> requiredRoles = new List<string> { "get","write" };
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("KeycloakAccessTokenRole", policy =>
+    options.AddPolicy("MustHaveGetRole", policy =>
     {
         policy.Requirements.Add(new GetKeycloakRoleRequirement(requiredRoles));
     });
@@ -128,7 +143,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
