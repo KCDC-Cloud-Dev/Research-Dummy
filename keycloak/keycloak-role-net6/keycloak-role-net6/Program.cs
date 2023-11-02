@@ -1,3 +1,4 @@
+using keycloak_role_net6.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Configuration;
@@ -109,6 +110,14 @@ builder.Services.AddAuthentication(options =>
 
 });
 
+List<string> requiredRoles = new List<string> { "get" };
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("KeycloakRolePolicy", policy =>
+    {
+        policy.Requirements.Add(new GetKeycloakRoleRequirement(requiredRoles));
+    });
+});
 
 
 var app = builder.Build();

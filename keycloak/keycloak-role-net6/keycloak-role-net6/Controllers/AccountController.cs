@@ -32,6 +32,12 @@ namespace keycloak_role_net6.Controllers
         }
 
 
+        [Authorize(Policy = "KeycloakRolePolicy")]
+        [HttpGet(nameof(GetAccountName))]
+        public async Task<string> GetAccountName()
+        {
+            return "Account Name";
+        }
 
     }
 }
