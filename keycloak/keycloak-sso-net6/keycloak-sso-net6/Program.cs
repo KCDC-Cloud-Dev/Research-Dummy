@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
@@ -54,6 +56,66 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = ClaimTypes.Role,
         ValidateIssuer = true
     };
+
+    // Access Token 解析
+    options.Events = new OpenIdConnectEvents
+    {
+        OnTokenValidated = context =>
+        {
+            // 查找包含 resource_access 數據的 Claim
+            
+
+            // 檢查這裡是否有拿到 Access Token
+            var accessToken = context.TokenEndpointResponse.AccessToken;
+            Console.WriteLine($"*******************{accessToken}");
+
+            if (accessToken == null)
+                return Task.CompletedTask;
+
+            /*
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(accessToken);
+            var tokenS = jsonToken as JwtSecurityToken;
+            */
+            // 從 Token 中提取 resource_access 數據
+
+            //var accessToken = context.TokenEndpointResponse.AccessToken;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(accessToken) as JwtSecurityToken;
+            var claimsIdentity = context.Principal.Identity as ClaimsIdentity;
+
+            if (jsonToken != null && claimsIdentity != null)
+            {
+                var resourceAccess = jsonToken.Claims.FirstOrDefault(c => c.Type == "resource_access")?.Value;
+                if (resourceAccess != null)
+                {
+                    var parsedResourceAccess = JObject.Parse(resourceAccess);
+                    var roles = parsedResourceAccess["admin-rest-client"]["roles"];
+
+                    foreach (var role in roles)
+                    {
+                        claimsIdentity.AddClaim(new Claim("role", role.ToString()));
+                    }
+                }
+            }
+
+            /*
+            var resourceAccess = tokenS?.Claims.FirstOrDefault(c => c.Type == "resource_access")?.Value;
+            if (resourceAccess != null)
+            {
+                var parsedResourceAccess = JObject.Parse(resourceAccess);
+                var roles = parsedResourceAccess["admin-rest-client"]["roles"];
+                foreach (var role in roles)
+                {
+                    context.Principal.AddIdentity(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Role, role.ToString()) }));
+                }
+            }
+            */
+            return Task.CompletedTask;
+        },
+    };
+
+
 });
 
 List<string> requiredRoles = new List<string> { "get" };
@@ -64,17 +126,6 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new MustHaveGetRoleRequirement(requiredRoles));
     });
 });
-
-/*
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("MustHaveGetRole", policy =>
-    {
-        policy.Requirements.Add(new MustHaveGetRoleRequirement());
-    });
-});
-*/
-
 
 var app = builder.Build();
 
