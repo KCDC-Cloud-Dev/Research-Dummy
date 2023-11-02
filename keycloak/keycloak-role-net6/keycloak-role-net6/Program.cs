@@ -1,8 +1,8 @@
 using keycloak_role_net6.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,7 +10,7 @@ using System.Security.Claims;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddSingleton<IAuthorizationHandler, KeycloakIDTokenGetRoleHandler>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -45,20 +45,6 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = bool.Parse(builder.Configuration.GetSection("Keycloak")["SaveTokens"]);
 
     // Access Token 解析手動放入Claims
-
-
-    options.Scope.Add("openid");
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
-    options.Scope.Add("roles");
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        NameClaimType = "preferred_username",
-        RoleClaimType = ClaimTypes.Role,
-        ValidateIssuer = true
-    };
-
-
     options.Events = new OpenIdConnectEvents
     {
         OnTokenValidated = context =>
@@ -114,7 +100,7 @@ builder.Services.AddAuthentication(options =>
 
             foreach (var role in roles)
             {
-                claimsIdentity.AddClaim(new Claim("role", role.ToString()));
+                claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
             }
 
             return Task.CompletedTask;

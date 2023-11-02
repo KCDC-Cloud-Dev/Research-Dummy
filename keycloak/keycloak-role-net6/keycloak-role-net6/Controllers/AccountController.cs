@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
@@ -31,13 +33,27 @@ namespace keycloak_role_net6.Controllers
             return tokenMessage.ToString();
         }
 
+        // 暫寫 ((正確做法後續處理)
+        [Authorize]
+        [HttpGet(nameof(Logout))]
+        public async Task<IActionResult> Logout()
+        {
+            return new SignOutResult(
+            new[] {
+                OpenIdConnectDefaults.AuthenticationScheme,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            });
+        }
 
+
+        // Policy Test
         [Authorize(Policy = "MustHaveGetRole")]
-        [HttpGet(nameof(GetAccountName))]
-        public async Task<string> GetAccountName()
+        [HttpGet(nameof(GetAccountNameAsync))]
+        public async Task<string> GetAccountNameAsync()
         {
             return "Account Name";
         }
 
+      
     }
 }
